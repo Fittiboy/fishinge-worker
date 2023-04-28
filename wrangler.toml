@@ -3,10 +3,12 @@ main = "build/worker/shim.mjs"
 compatibility_date = "2023-03-22"
 usage_model = "bundled"
 
+route = { pattern = "fishinge.fitti.io", zone_id = "21a34530ef05899904cd180bb54eb3c4" , custom_domain = true }
+
 [build]
 command = "cargo install -q worker-build && worker-build --release"
 
 [env.production]
 routes = [
-	{ pattern = "fishinge.fitti.io/*", zone_name = "fitti.io" , custom_domain = true }
+	{ pattern = "fishinge.fitti.io/*", zone_name = "fitti.io" }
 ]
