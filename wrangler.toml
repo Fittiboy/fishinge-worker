@@ -8,6 +8,5 @@ command = "cargo install -q worker-build && worker-build --release"
 
 [env.production]
 routes = [
-	{ pattern = "fishinge.fitti.io/*", zone_name = "fitti.io" }
+	{ pattern = "fishinge.fitti.io/*", zone_name = "fitti.io" , custom_domain = true }
 ]
-
