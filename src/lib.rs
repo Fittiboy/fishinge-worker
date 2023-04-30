@@ -21,7 +21,7 @@ pub async fn main(req: Request, env: Env, _ctx: Context) -> worker::Result<Respo
 }
 
 pub fn webhook() -> Result<String, WebhookError> {
-    Ok("Hello, world!".to_string())
+    Ok("Hello, pond!".to_string())
 }
 
 #[derive(Debug)]
