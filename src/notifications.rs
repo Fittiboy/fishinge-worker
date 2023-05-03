@@ -7,13 +7,13 @@ pub struct Revocation {}
 
 #[derive(Debug, Default)]
 pub struct TwitchHeaders {
-    id: String,
-    retry: String,
-    message_type: MessageType,
-    signature: String,
-    timestamp: String,
-    subscription_type: String,
-    subscription_version: String,
+    pub id: String,
+    pub retry: String,
+    pub message_type: MessageType,
+    pub signature: String,
+    pub timestamp: String,
+    pub subscription_type: String,
+    pub subscription_version: String,
 }
 
 impl TryFrom<&worker::Headers> for TwitchHeaders {
