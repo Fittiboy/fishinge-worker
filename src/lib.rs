@@ -9,21 +9,30 @@ mod verification;
 
 #[event(fetch)]
 pub async fn main(req: Request, env: Env, _ctx: Context) -> worker::Result<Response> {
+    let secret = env
+        .secret("HMAC_SECRET")
+        .expect("HMAC_SECRET needs to be defined for message verification")
+        .to_string();
     utils::log_request(&req);
     utils::set_panic_hook();
-    let router = Router::new();
+    let router = Router::with_data(secret);
 
     router
-        .get("/", |_req, _ctx| match webhook() {
+        .get("/", |_req, ctx| match webhook(ctx.data) {
             Ok(body) => Response::ok(body),
-            Err(err) => Response::error(err.to_string(), 500),
+            Err(err) => Response::error(
+                err.to_string(),
+                match err {
+                    WebhookError::CannotVerifyMessage => 403,
+                },
+            ),
         })
         .run(req, env)
         .await
 }
 
-pub fn webhook() -> Result<String, WebhookError> {
-    if verification::good_hmac() {
+pub fn webhook(secret: String) -> Result<String, WebhookError> {
+    if verification::good_hmac(secret) {
         Ok("Hello, pond!".to_string())
     } else {
         Err(WebhookError::CannotVerifyMessage)
@@ -49,6 +58,6 @@ pub mod test {
 
     #[test]
     fn webhook_ok() {
-        let _response = webhook().unwrap();
+        let _response = webhook("test".to_string()).unwrap();
     }
 }
