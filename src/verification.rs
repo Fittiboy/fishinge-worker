@@ -6,7 +6,6 @@ type HmacSha256 = Hmac<Sha256>;
 use crate::notifications::TwitchHeaders;
 
 pub fn good_signature(secret: &str, headers: &TwitchHeaders, body: &str) -> bool {
-    const _HMAC_PREFIX: &str = "sha256=";
     let message = construct_hmac_message(headers, body);
     let signature = headers.signature.clone();
     let signature = hex::decode(signature.as_str().split_once('=').unwrap().1).unwrap();
