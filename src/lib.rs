@@ -3,7 +3,9 @@ use std::{error, fmt};
 
 use worker::{event, Context, Env, Request, Response, Router};
 
+mod notifications;
 mod utils;
+mod verification;
 
 #[event(fetch)]
 pub async fn main(req: Request, env: Env, _ctx: Context) -> worker::Result<Response> {
@@ -21,11 +23,17 @@ pub async fn main(req: Request, env: Env, _ctx: Context) -> worker::Result<Respo
 }
 
 pub fn webhook() -> Result<String, WebhookError> {
-    Ok("Hello, pond!".to_string())
+    if verification::good_hmac() {
+        Ok("Hello, pond!".to_string())
+    } else {
+        Err(WebhookError::CannotVerifyMessage)
+    }
 }
 
 #[derive(Debug)]
-pub enum WebhookError {}
+pub enum WebhookError {
+    CannotVerifyMessage,
+}
 
 impl error::Error for WebhookError {}
 
