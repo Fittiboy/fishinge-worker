@@ -1,54 +1,47 @@
 #![allow(missing_docs, clippy::missing_errors_doc)]
-use std::{error, fmt};
 
 use worker::{event, Context, Env, Request, Response, Router};
 
+mod error;
 mod notifications;
 mod utils;
 mod verification;
 
+use notifications::TwitchHeaders;
+
 #[event(fetch)]
 pub async fn main(req: Request, env: Env, _ctx: Context) -> worker::Result<Response> {
-    let secret = env
-        .secret("HMAC_SECRET")
-        .expect("HMAC_SECRET needs to be defined for message verification")
-        .to_string();
     utils::log_request(&req);
     utils::set_panic_hook();
-    let router = Router::with_data(secret);
+
+    let Ok(secret) = env.secret("HMAC_SECRET") else {
+        return Response::error("Internal server error", 500);
+    };
+    let router = Router::with_data(secret.to_string());
 
     router
-        .get("/", |_req, ctx| match webhook(ctx.data) {
-            Ok(body) => Response::ok(body),
-            Err(err) => Response::error(
-                err.to_string(),
-                match err {
-                    WebhookError::CannotVerifyMessage => 403,
-                },
-            ),
+        .get("/", |_req, _ctx| Response::ok("Hello, pond!"))
+        .post("/eventsub", |req, ctx| {
+            let headers: TwitchHeaders = req.headers().try_into()?;
+            match webhook(ctx.data, headers) {
+                Ok(body) => Response::ok(body),
+                Err(err) => Response::error(
+                    err.to_string(),
+                    match err {
+                        error::Webhook::CannotVerifyMessage => 403,
+                    },
+                ),
+            }
         })
         .run(req, env)
         .await
 }
 
-pub fn webhook(secret: String) -> Result<String, WebhookError> {
-    if verification::good_hmac(secret) {
+fn webhook(secret: String, headers: TwitchHeaders) -> Result<String, error::Webhook> {
+    if verification::good_hmac(secret, headers) {
         Ok("Hello, pond!".to_string())
     } else {
-        Err(WebhookError::CannotVerifyMessage)
-    }
-}
-
-#[derive(Debug)]
-pub enum WebhookError {
-    CannotVerifyMessage,
-}
-
-impl error::Error for WebhookError {}
-
-impl fmt::Display for WebhookError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{:?}", self)
+        Err(error::Webhook::CannotVerifyMessage)
     }
 }
 
@@ -58,6 +51,6 @@ pub mod test {
 
     #[test]
     fn webhook_ok() {
-        let _response = webhook("test".to_string()).unwrap();
+        webhook("test".to_string(), TwitchHeaders::default()).unwrap();
     }
 }
