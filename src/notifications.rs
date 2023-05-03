@@ -1,8 +1,33 @@
-#![allow(dead_code)]
-pub struct Notification {}
+use serde::Deserialize;
 
+#[derive(Debug, Deserialize)]
+pub struct Notification {
+    subscription: Subscription,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct Subscription {
+    id: String,
+    r#type: NotificationType,
+    status: String,
+    condition: Condition,
+    created_at: String,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename = "channel.channel_points_custom_reward_redemption.add")]
+pub struct NotificationType;
+
+#[derive(Debug, Deserialize)]
+pub struct Condition {
+    broadcaster_user_id: String,
+    reward_id: String,
+}
+
+#[derive(Debug, Deserialize)]
 pub struct WebhookCallbackVerification {}
 
+#[derive(Debug, Deserialize)]
 pub struct Revocation {}
 
 #[derive(Debug, Default)]

@@ -117,6 +117,7 @@ dependencies = [
  "cfg-if",
  "hex",
  "hmac",
+ "serde",
  "serde_json",
  "sha2",
  "worker",
