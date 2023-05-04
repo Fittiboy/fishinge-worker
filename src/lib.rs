@@ -55,7 +55,7 @@ fn webhook(secret: &str, headers: &TwitchHeaders, body: &str) -> Result<String, 
     }
     let body: TwitchRequest = body.try_into()?;
     let response = match body {
-        TwitchRequest::WebhookCallbackVerification(body) => challenge_callback(body),
+        TwitchRequest::WebhookCallbackVerification(body) => body.challenge,
         TwitchRequest::Notification(_) => "Thanks for the ping!".to_string(),
         TwitchRequest::Revocation(_) => "Sad to see you go!".to_string(),
     };
