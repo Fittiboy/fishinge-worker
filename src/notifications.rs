@@ -49,26 +49,12 @@ pub struct Subscription {
 pub enum NotificationType {
     #[serde(rename = "channel.channel_points_custom_reward_redemption.add")]
     Redemption,
-    #[serde(rename = "channel.follow")]
-    Follow,
 }
 
 #[derive(Debug, Deserialize)]
-#[serde(untagged)]
-pub enum Condition {
-    Redemption(RedemptionCondition),
-    Follow(FollowCondition),
-}
-
-#[derive(Debug, Deserialize)]
-pub struct RedemptionCondition {
+pub struct Condition {
     pub broadcaster_user_id: String,
     pub reward_id: String,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct FollowCondition {
-    pub broadcaster_user_id: String,
 }
 
 #[derive(Debug, Deserialize)]

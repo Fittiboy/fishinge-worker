@@ -24,11 +24,12 @@ fn responds_to_challenge() {
         "subscription": {
             "id": "f1c2a387-161a-49f9-a165-0f21d7a4e1c4",
             "status": "webhook_callback_verification_pending",
-            "type": "channel.follow",
+            "type": "channel.channel_points_custom_reward_redemption.add",
             "version": "1",
             "cost": 1,
             "condition": {
-              "broadcaster_user_id": "12826"
+              "broadcaster_user_id": "12826",
+              "reward_id": "239847"
             },
             "transport": {
               "method": "webhook",
@@ -40,7 +41,7 @@ fn responds_to_challenge() {
     let mut headers = headers();
     headers.message_type = notifications::MessageType::WebhookCallbackVerification;
     headers.signature =
-        "sha256=5a7e917cb13a4f91bd6ad5c0486c7019f240d91356e81a17e0f76843faa2f0d9".to_string();
+        "sha256=8bb55a7fc20b88cc2732dd220cb3bd559012eab29c2ae254724ad475d3daee01".to_string();
     let response = webhook("callback", &headers, challenge).unwrap();
     assert_eq!(response, "pogchamp-kappa-360noscope-vohiyo".to_string());
 }
