@@ -20,22 +20,29 @@ impl TryFrom<&str> for TwitchRequest {
 
 #[derive(Debug, Deserialize)]
 pub struct WebhookCallbackVerification {
-    challenge: String,
-    subscription: Subscription,
+    pub challenge: String,
+    pub subscription: Subscription,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct Notification {
-    subscription: Subscription,
+    pub subscription: Subscription,
+    pub event: Event,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct Event {
+    pub user_id: String,
+    pub user_name: String,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct Subscription {
-    id: String,
-    r#type: NotificationType,
-    status: String,
-    condition: Condition,
-    created_at: String,
+    pub id: String,
+    pub r#type: NotificationType,
+    pub status: String,
+    pub condition: Condition,
+    pub created_at: String,
 }
 
 #[derive(Debug, Deserialize)]
@@ -44,12 +51,14 @@ pub struct NotificationType;
 
 #[derive(Debug, Deserialize)]
 pub struct Condition {
-    broadcaster_user_id: String,
-    reward_id: String,
+    pub broadcaster_user_id: String,
+    pub reward_id: String,
 }
 
 #[derive(Debug, Deserialize)]
-pub struct Revocation {}
+pub struct Revocation {
+    pub subscription: Subscription,
+}
 
 #[derive(Debug, Default)]
 pub struct TwitchHeaders {
