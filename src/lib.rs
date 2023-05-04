@@ -8,7 +8,6 @@ mod notifications;
 mod utils;
 mod verification;
 
-use handlers::challenge_callback;
 use notifications::{TwitchHeaders, TwitchRequest};
 
 #[event(fetch)]
