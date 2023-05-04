@@ -1,4 +1,28 @@
+use crate::error;
 use serde::Deserialize;
+use std::convert::Into;
+
+#[derive(Debug, Deserialize)]
+#[serde(untagged)]
+pub enum TwitchRequest {
+    WebhookCallbackVerification(WebhookCallbackVerification),
+    Notification(Notification),
+    Revocation(Revocation),
+}
+
+impl TryFrom<&str> for TwitchRequest {
+    type Error = error::Webhook;
+
+    fn try_from(body: &str) -> Result<Self, Self::Error> {
+        serde_json::from_str(body).map_err(Into::into)
+    }
+}
+
+#[derive(Debug, Deserialize)]
+pub struct WebhookCallbackVerification {
+    challenge: String,
+    subscription: Subscription,
+}
 
 #[derive(Debug, Deserialize)]
 pub struct Notification {
@@ -22,12 +46,6 @@ pub struct NotificationType;
 pub struct Condition {
     broadcaster_user_id: String,
     reward_id: String,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct WebhookCallbackVerification {
-    challenge: String,
-    subscription: Subscription,
 }
 
 #[derive(Debug, Deserialize)]
