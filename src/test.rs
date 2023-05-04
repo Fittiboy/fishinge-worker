@@ -4,7 +4,7 @@ fn headers() -> TwitchHeaders {
     TwitchHeaders {
         id: "ID".to_string(),
         timestamp: "TIMESTAMP".to_string(),
-        signature: String::new(),
+        signature: String::new(), // https://cryptotools.net/hmac
         ..Default::default()
     }
 }
