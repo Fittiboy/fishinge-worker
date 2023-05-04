@@ -26,3 +26,34 @@ impl From<serde_json::Error> for Webhook {
         Self::CannotParseBody(err)
     }
 }
+
+#[derive(Debug)]
+pub enum Twitch {
+    CannotGetAccessToken(reqwest::Error),
+}
+
+impl error::Error for Twitch {
+    fn source(&self) -> Option<&(dyn error::Error + 'static)> {
+        match self {
+            Twitch::CannotGetAccessToken(err) => Some(err),
+        }
+    }
+}
+
+impl fmt::Display for Twitch {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
+impl From<reqwest::Error> for Twitch {
+    fn from(err: reqwest::Error) -> Self {
+        Self::CannotGetAccessToken(err)
+    }
+}
+
+impl From<Twitch> for worker::Error {
+    fn from(err: Twitch) -> Self {
+        Self::from(err.to_string())
+    }
+}
