@@ -25,7 +25,10 @@ pub struct Condition {
 }
 
 #[derive(Debug, Deserialize)]
-pub struct WebhookCallbackVerification {}
+pub struct WebhookCallbackVerification {
+    challenge: String,
+    subscription: Subscription,
+}
 
 #[derive(Debug, Deserialize)]
 pub struct Revocation {}
