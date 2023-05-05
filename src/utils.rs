@@ -1,5 +1,5 @@
 use cfg_if::cfg_if;
-use worker::{console_log, Date, Request};
+use worker::{console_log, Date, Request, Response, ResponseBody};
 
 pub fn log_request(req: &Request) {
     console_log!(
@@ -18,5 +18,20 @@ cfg_if! {
     } else {
         #[inline]
         pub fn set_panic_hook() {}
+    }
+}
+
+pub trait Length {
+    fn with_length(self) -> Self;
+}
+
+impl Length for worker::Result<Response> {
+    fn with_length(self) -> Self {
+        let mut response = self?;
+        if let ResponseBody::Body(body) = response.body() {
+            let length = body.len().to_string();
+            response.headers_mut().set("Content-Length", &length)?;
+        };
+        Ok(response)
     }
 }

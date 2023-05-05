@@ -2,6 +2,7 @@
 
 use worker::{event, Context, Env, Request, Response, Router, Url};
 
+mod data;
 mod error;
 mod handlers;
 mod notifications;
@@ -9,24 +10,10 @@ mod twitch_auth;
 mod utils;
 mod verification;
 
+use data::{Client, Secrets};
 use notifications::{TwitchHeaders, TwitchRequest};
-use twitch_auth::{authorization_flow, token_from_code, valid_token};
-
-struct Secrets {
-    hmac: String,
-    client_id: String,
-    client_secret: String,
-}
-
-impl Secrets {
-    fn retrieve(env: &Env) -> Option<Self> {
-        Some(Self {
-            hmac: env.secret("HMAC_SECRET").ok()?.to_string(),
-            client_id: env.secret("TWITCH_CLIENT_ID").ok()?.to_string(),
-            client_secret: env.secret("TWITCH_CLIENT_SECRET").ok()?.to_string(),
-        })
-    }
-}
+use twitch_auth::{authorization_flow, request_token, valid_token};
+use utils::Length;
 
 #[event(fetch)]
 pub async fn main(req: Request, env: Env, _ctx: Context) -> worker::Result<Response> {
@@ -44,29 +31,11 @@ pub async fn main(req: Request, env: Env, _ctx: Context) -> worker::Result<Respo
             authorization_flow("https://fishinge.fitti.io/", &ctx.data.client_id)
         })
         .get_async("/get_token", |req, ctx| async move {
-            let url = req.url().unwrap();
-            let code = url
-                .query_pairs()
-                .find_map(|(key, value)| if key == "code" { Some(value) } else { None })
-                .ok_or(worker::Error::from("No token received from Twitch"))?;
-            let token = token_from_code(
-                "https://fishinge.fitti.io/get_token",
-                &ctx.data.client_id,
-                &ctx.data.client_secret,
-                &code,
-            )
-            .await?;
-            if valid_token(&token)
-                .await
-                .map_err(|err| worker::Error::from(err.to_string()))?
-            {
-                Response::redirect(
-                    Url::parse(&format!(
-                        "https://fishinge.fitti.io/dashboard?token={}",
-                        token
-                    ))
-                    .unwrap(),
-                )
+            let data = Client::new(&req, ctx)?;
+            let token = request_token(data).await?;
+            if valid_token(&token).await? {
+                let redirect = format!("https://fishinge.fitti.io/dashboard?token={}", token);
+                Response::redirect(Url::parse(&redirect)?)
             } else {
                 Response::error("That didn't work somehow! Try contacting Fitti!", 500)
             }
@@ -75,25 +44,11 @@ pub async fn main(req: Request, env: Env, _ctx: Context) -> worker::Result<Respo
             Response::ok(format!("This is how you got here: {}", req.url().unwrap()))
         })
         .post_async("/eventsub", |mut req, ctx| async move {
-            let headers: TwitchHeaders = req.headers().try_into()?;
-            let body = req.text().await?;
-            match webhook(&ctx.data.hmac, &headers, &body) {
-                Ok(body) => {
-                    let content_length = body.as_bytes().len();
-                    let mut response = Response::ok(body).unwrap();
-                    let headers = response.headers_mut();
-                    headers
-                        .set("Content-Length", &content_length.to_string())
-                        .unwrap();
-                    Ok(response)
-                }
-                Err(err) => Response::error(
-                    err.to_string(),
-                    match err {
-                        error::Webhook::CannotVerifyMessage => 403,
-                        error::Webhook::CannotParseBody(_) => 500,
-                    },
-                ),
+            let headers: &TwitchHeaders = &req.headers().try_into()?;
+            let body = &req.text().await?;
+            match webhook(&ctx.data.hmac, headers, body) {
+                Ok(body) => Response::ok(body).with_length(),
+                Err(err) => err.into(),
             }
         })
         .run(req, env)

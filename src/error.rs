@@ -6,6 +6,21 @@ pub enum Webhook {
     CannotParseBody(serde_json::Error),
 }
 
+impl Webhook {
+    pub fn code(&self) -> u16 {
+        match self {
+            Self::CannotVerifyMessage => 403,
+            Self::CannotParseBody(_) => 500,
+        }
+    }
+}
+
+impl From<Webhook> for worker::Result<worker::Response> {
+    fn from(err: Webhook) -> Self {
+        worker::Response::error(err.to_string(), err.code())
+    }
+}
+
 impl error::Error for Webhook {
     fn source(&self) -> Option<&(dyn error::Error + 'static)> {
         match self {

@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 use worker::Url;
 
+use crate::data::Client;
 use crate::error::Twitch;
 
 pub fn authorization_flow(redirect: &str, client_id: &str) -> worker::Result<worker::Response> {
@@ -21,18 +22,13 @@ pub fn authorization_flow(redirect: &str, client_id: &str) -> worker::Result<wor
     worker::Response::redirect(auth_url)
 }
 
-pub async fn token_from_code(
-    redirect: &str,
-    client_id: &str,
-    client_secret: &str,
-    code: &str,
-) -> Result<String, Twitch> {
+pub async fn request_token(data: Client) -> Result<String, Twitch> {
     let params = [
-        ("client_id", client_id),
-        ("client_secret", client_secret),
-        ("code", code),
-        ("grant_type", "authorization_code"),
-        ("redirect_uri", redirect),
+        ("client_id", data.client_id),
+        ("client_secret", data.client_secret),
+        ("code", data.code),
+        ("grant_type", "authorization_code".to_string()),
+        ("redirect_uri", data.redirect),
     ];
     let client = reqwest::Client::new();
     let response: UserAccessTokenResponse = client
@@ -95,6 +91,8 @@ pub struct InvalidToken {
     pub message: String,
 }
 
+//TODO: remove annotation after using function
+#[allow(dead_code)]
 pub async fn app_access_token(client_id: &str, client_secret: &str) -> Result<String, Twitch> {
     let params = [
         ("client_id", client_id),
