@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 use worker::Url;
 
+use crate::apis::UserAccessToken;
 use crate::data::Client;
 use crate::error::Twitch;
 
@@ -22,7 +23,7 @@ pub fn authorization_flow(redirect: &str, client_id: &str) -> worker::Result<wor
     worker::Response::redirect(auth_url)
 }
 
-pub async fn request_token(data: Client) -> Result<String, Twitch> {
+pub async fn request_token(data: Client) -> Result<UserAccessToken, Twitch> {
     let params = [
         ("client_id", data.client_id),
         ("client_secret", data.client_secret),
@@ -44,40 +45,33 @@ pub async fn request_token(data: Client) -> Result<String, Twitch> {
 
 #[derive(Debug, Deserialize)]
 pub struct UserAccessTokenResponse {
-    pub access_token: String,
+    pub access_token: UserAccessToken,
     pub expires_in: usize,
     pub refresh_token: String,
     pub scope: Vec<String>,
     pub token_type: String,
 }
 
-pub async fn valid_token(token: &str) -> Result<bool, Twitch> {
+pub async fn valid_token(token: &str) -> Result<ValidationResponse, Twitch> {
     let client = reqwest::Client::new();
-    let response: ValidationResponse = client
+    Ok(client
         .get("https://id.twitch.tv/oauth2/validate")
         .header("Authorization", format!("Bearer {}", token))
         .send()
         .await?
         .json()
-        .await?;
-    match response {
-        ValidationResponse::Valid(_) => Ok(true),
-        ValidationResponse::Invalid(response) => {
-            worker::console_error!("{:#?}", response);
-            Ok(false)
-        }
-    }
+        .await?)
 }
 
 #[derive(Debug, Deserialize)]
 #[serde(untagged)]
-enum ValidationResponse {
-    Valid(ValidToken),
+pub enum ValidationResponse {
+    Valid(TokenMetadata),
     Invalid(InvalidToken),
 }
 
-#[derive(Debug, Deserialize)]
-pub struct ValidToken {
+#[derive(Debug, Deserialize, Serialize)]
+pub struct TokenMetadata {
     pub client_id: String,
     pub login: String,
     pub scopes: Vec<String>,

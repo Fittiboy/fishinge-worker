@@ -12,3 +12,8 @@ command = "cargo install -q worker-build && worker-build --release"
 routes = [
 	{ pattern = "fishinge.fitti.io/*", zone_name = "fitti.io" }
 ]
+
+[[kv_namespaces]]
+binding = "users"
+id = "99c06cec691945578be7edc031b1d098"
+preview_id = "db323d93b9d44df1b6d356ca115bbc0a"
