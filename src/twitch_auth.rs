@@ -1,14 +1,13 @@
 use serde::{Deserialize, Serialize};
-use std::str::FromStr;
 use worker::Url;
 
 use crate::apis::UserAccessToken;
 use crate::data::Client;
 use crate::error::Twitch;
 
-pub fn authorization_flow(redirect: &str, client_id: &str) -> worker::Result<worker::Response> {
-    let redirect: Url = Url::from_str(redirect).unwrap();
-    let redirect = redirect.join("/get_token")?;
+pub fn authorization_flow(mut redirect: Url, client_id: &str) -> worker::Result<worker::Response> {
+    redirect.set_path("/twitch_token");
+    redirect.set_query(None);
     let scopes = Scopes::from(&["channel:manage:redemptions"]);
     let mut auth_url = Url::parse("https://id.twitch.tv/oauth2/authorize")?;
     auth_url

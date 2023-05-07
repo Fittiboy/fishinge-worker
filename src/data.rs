@@ -27,16 +27,19 @@ pub struct Client {
 
 impl Client {
     pub fn new(req: &worker::Request, ctx: &worker::RouteContext<Secrets>) -> worker::Result<Self> {
-        let url = req.url().unwrap();
+        let mut url = req.url().unwrap();
         let code = url
             .query_pairs()
             .find_map(|(key, value)| if key == "code" { Some(value) } else { None })
-            .ok_or(worker::Error::from("No token received from Twitch"))?;
+            .ok_or(worker::Error::from("No token received from Twitch"))?
+            .to_string();
+        url.set_path("/twitch_token");
+        url.set_query(None);
         Ok(Self {
-            redirect: "https://fishinge.fitti.io/get_token".to_string(),
+            redirect: url.to_string(),
             client_id: ctx.data.client_id.clone(),
             client_secret: ctx.data.client_secret.clone(),
-            code: code.to_string(),
+            code,
             token: String::new(),
         })
     }
